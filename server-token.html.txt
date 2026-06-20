@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Server token · CaptchaLa demo</title>
+<meta name="description" content="CaptchaLa server-token demo — backend pre-issues a session-bound, single-use token to prevent replay attacks.">
+<link rel="icon" href="https://captcha.la/favicon.svg">
+<link rel="stylesheet" href="/_shared.css">
+</head>
+<body>
+
+<header>
+  <a class="brand" href="/"><b>Captcha</b>La · standalone demo</a>
+  <nav>
+    <a href="/">Home</a>
+    <a href="https://captcha.la/en/docs">Docs</a>
+    <a href="https://dash.captcha.la/register">Get app key</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Server token (anti-replay)</h1>
+  <p class="lead">
+    For high-value flows, the backend pre-issues a short-lived token bound to the user's IP at issuance time.
+    The verification token returned to the SDK is then bound to that session — a leaked token can't be reused by another user.
+    <a href="/server-token.html.txt">View source</a>.
+  </p>
+
+  <nav class="tabs">
+    <a href="/popup.html">Popup</a>
+    <a href="/float.html">Float</a>
+    <a href="/bind.html">Bind to button</a>
+    <a href="/inline.html">Inline embed</a>
+    <a href="/server-token.html" class="active">Server token</a>
+  </nav>
+
+  <section class="demo">
+    <h2>Live demo</h2>
+    <p class="subtitle">The page calls <code>/issue-token.php</code> first, then mounts the widget with the issued token.</p>
+
+    <div class="stage">
+      <div id="status" style="color: #6B7280; font-size: 13px; margin-bottom: 12px;">Loading…</div>
+      <button id="signup-btn" class="cta" type="button" disabled>Verify and sign up</button>
+      <div id="result" class="result"></div>
+    </div>
+
+    <div class="actions">
+      <a href="/server-token.html.txt">View HTML source</a>
+      <a href="/issue-token.php.txt">Backend issue-token.php</a>
+      <a href="/verify.php.txt">Backend verify.php</a>
+    </div>
+  </section>
+
+  <section class="demo">
+    <h2>Integration flow</h2>
+    <pre><span class="c">// 1. On page load, your backend issues a fresh token.</span>
+<span class="c">//    POST https://apiv1.captcha.la/v1/server-token/issue (server-side)</span>
+<span class="c">//    Body: { action, binding_ip, ttl: 300, max_uses: 10 }</span>
+
+<span class="c">// 2. Frontend fetches the issued token via your endpoint.</span>
+const res = await fetch(<span class="s">'/issue-token.php?action=register'</span>);
+const { token: serverToken, app_key } = await res.json();
+
+<span class="c">// 3. Mount the widget with the server token bound in.</span>
+Captchala.init({
+  appKey: app_key,
+  serverToken: serverToken,    <span class="c">// ← bound to user's IP, expires in 5 min</span>
+  product: <span class="s">'popup'</span>,
+  bindTo: <span class="s">'#signup-btn'</span>,
+  action: <span class="s">'register'</span>,
+  onSuccess: (res) =&gt; {
+    <span class="c">// 4. Backend verifies the verification token (still required).</span>
+    fetch(<span class="s">'/verify.php'</span>, {
+      method: <span class="s">'POST'</span>,
+      headers: { <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span> },
+      body: JSON.stringify({ token: res.token, action: <span class="s">'register'</span> })
+    });
+  }
+});</pre>
+  </section>
+
+  <section class="demo">
+    <h2>When to use server token</h2>
+    <p class="subtitle" style="margin-bottom: 0;">
+      Sign-up, payment, password reset — any flow where the cost of a successful bypass is high enough to justify the extra round-trip. The server token binds verification to a specific session and IP, so an attacker can't grab a token from one user and replay it for another. For low-stakes flows (newsletter signup, comment posting), it's overkill.
+    </p>
+  </section>
+</main>
+
+<footer>
+  <a href="https://captcha.la">CaptchaLa</a>
+  <a href="https://captcha.la/en/privacy">Privacy</a>
+  <a href="https://captcha.la/en/terms">Terms</a>
+  <a href="/LICENSE">MIT License</a>
+</footer>
+
+<script src="https://cdn.captcha-cdn.net/captchala-loader.js"></script>
+<script>
+function showResult(ok, msg) {
+  const el = document.getElementById('result');
+  el.className = 'result ' + (ok ? 'ok' : 'err');
+  el.textContent = msg;
+}
+
+(async function bootstrap() {
+  const statusEl = document.getElementById('status');
+  const btn = document.getElementById('signup-btn');
+
+  // Step 1: fetch a server token from the backend (via /issue-token.php → apiv1)
+  let serverToken = null, appKey = 'demo_app';
+  try {
+    const r = await fetch('/issue-token.php?action=register');
+    const j = await r.json();
+    if (j.ok && j.token) {
+      serverToken = j.token;
+      appKey = j.app_key || appKey;
+      statusEl.textContent = '✓ server token issued · ttl=' + (j.expires_in || 300) + 's';
+      statusEl.style.color = '#047857';
+    } else {
+      statusEl.textContent = '⚠ no server token (fallback to plain) · ' + (j.error || 'unknown');
+      statusEl.style.color = '#B45309';
+    }
+  } catch (e) {
+    statusEl.textContent = '⚠ token fetch failed (fallback) · ' + e.message;
+    statusEl.style.color = '#B45309';
+  }
+
+  // Step 2: load SDK + mount widget
+  loadCaptchala(function () {
+    Captchala.init({
+      appKey: appKey,
+      serverToken: serverToken || undefined,
+      product: 'popup',
+      action: 'register',
+      lang: 'en',
+    })
+    .onSuccess(async function (res) {
+      try {
+        const r = await fetch('/verify.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: res.token, action: 'register' })
+        });
+        const j = await r.json();
+        if (j.ok) showResult(true, '✓ verified · risk_score=' + (j.risk_score ?? 'n/a'));
+        else showResult(false, '✗ backend rejected: ' + (j.error || 'unknown'));
+      } catch (e) { showResult(false, '✗ network error: ' + e.message); }
+    })
+    .onError(function (err) { showResult(false, '✗ ' + (err && err.message || 'verification failed')); })
+    .bindTo('#signup-btn');
+    btn.disabled = false;
+  }, function (err) { showResult(false, '✗ SDK load failed: ' + (err && err.message || err)); });
+})();
+</script>
+
+</body>
+</html>

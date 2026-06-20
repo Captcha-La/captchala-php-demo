@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Popup mode · CaptchaLa demo</title>
+<meta name="description" content="CaptchaLa popup mode demo — verification appears in a modal when the user clicks. Pure HTML, no framework.">
+<link rel="icon" href="https://captcha.la/favicon.svg">
+<link rel="stylesheet" href="/_shared.css">
+</head>
+<body>
+
+<header>
+  <a class="brand" href="/"><b>Captcha</b>La · standalone demo</a>
+  <nav>
+    <a href="/">Home</a>
+    <a href="https://captcha.la/en/docs">Docs</a>
+    <a href="https://dash.captcha.la/register">Get app key</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Popup mode</h1>
+  <p class="lead">
+    Verification appears in a modal when the user clicks. Best for sign-up and login forms.
+    <a href="/index.html.txt">View source</a>.
+  </p>
+
+  <nav class="tabs">
+    <a href="/popup.html" class="active">Popup</a>
+    <a href="/float.html">Float</a>
+    <a href="/bind.html">Bind to button</a>
+    <a href="/inline.html">Inline embed</a>
+    <a href="/server-token.html">Server token</a>
+  </nav>
+
+  <section class="demo">
+    <h2>Live demo</h2>
+    <p class="subtitle">Click the button, complete the verification in the modal, watch the token come back.</p>
+
+    <div class="stage">
+      <button id="popup-btn" class="cta" type="button">Verify with popup</button>
+      <div id="result" class="result"></div>
+    </div>
+
+    <div class="actions">
+      <a href="/popup.html.txt">View HTML source</a>
+      <a href="/_sdk.js">SDK loader source</a>
+      <a href="/verify.php.txt">Backend verify.php</a>
+    </div>
+  </section>
+
+  <section class="demo">
+    <h2>Integration code</h2>
+    <p class="subtitle">Copy these three pieces into your page.</p>
+    <pre><span class="c">&lt;!-- 1. Load the SDK --&gt;</span>
+<span class="k">&lt;script</span> src=<span class="s">"https://cdn.captcha-cdn.net/captchala.js"</span><span class="k">&gt;&lt;/script&gt;</span>
+
+<span class="c">&lt;!-- 2. Add a trigger button --&gt;</span>
+<span class="k">&lt;button</span> id=<span class="s">"popup-btn"</span><span class="k">&gt;</span>Verify<span class="k">&lt;/button&gt;</span>
+
+<span class="c">&lt;!-- 3. Initialize Captchala bound to the button --&gt;</span>
+<span class="k">&lt;script&gt;</span>
+Captchala.init({
+  appKey: <span class="s">'YOUR_APP_KEY'</span>,
+  product: <span class="s">'popup'</span>,
+  bindTo: <span class="s">'#popup-btn'</span>,
+  action: <span class="s">'login'</span>,
+  onSuccess: (res) =&gt; {
+    <span class="c">// Send res.token to your backend (POST /verify.php).</span>
+    <span class="c">// Single-use; consume server-side, don't trust client.</span>
+    fetch(<span class="s">'/verify.php'</span>, {
+      method: <span class="s">'POST'</span>,
+      headers: { <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span> },
+      body: JSON.stringify({ token: res.token, action: <span class="s">'login'</span> })
+    }).then(r =&gt; r.json()).then(j =&gt; { <span class="c">/* j.ok === true */</span> });
+  },
+  onError: (err) =&gt; console.error(err)
+});
+<span class="k">&lt;/script&gt;</span></pre>
+  </section>
+
+  <section class="demo">
+    <h2>When to use popup</h2>
+    <p class="subtitle" style="margin-bottom: 0;">
+      Sign-up forms, login pages, password reset flows. Anywhere the user is already going to click a "Submit" or "Continue" button — bind the verification to that click and the user sees one modal, not a separate verification step.
+    </p>
+  </section>
+</main>
+
+<footer>
+  <a href="https://captcha.la">CaptchaLa</a>
+  <a href="https://captcha.la/en/privacy">Privacy</a>
+  <a href="https://captcha.la/en/terms">Terms</a>
+  <a href="/LICENSE">MIT License</a>
+</footer>
+
+<script src="https://cdn.captcha-cdn.net/captchala-loader.js"></script>
+<script>
+function showResult(ok, msg) {
+  const el = document.getElementById('result');
+  el.className = 'result ' + (ok ? 'ok' : 'err');
+  el.textContent = msg;
+}
+loadCaptchala(function () {
+  Captchala.init({
+    appKey: 'demo_app',
+    product: 'popup',
+    action: 'login',
+  })
+  .onSuccess(async function (res) {
+    try {
+      const r = await fetch('/verify.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: res.token, action: 'login' })
+      });
+      const j = await r.json();
+      if (j.ok) showResult(true, '✓ verified · risk_score=' + (j.risk_score ?? 'n/a') + ' · token: ' + (res.token || '').slice(0, 24) + '…');
+      else showResult(false, '✗ backend rejected: ' + (j.error || 'unknown'));
+    } catch (e) { showResult(false, '✗ network error: ' + e.message); }
+  })
+  .onError(function (err) { showResult(false, '✗ ' + (err && err.message || 'verification failed')); })
+  .bindTo('#popup-btn');
+}, function (err) { showResult(false, '✗ SDK load failed: ' + (err && err.message || err)); });
+</script>
+
+</body>
+</html>

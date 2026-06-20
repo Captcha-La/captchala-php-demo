@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Float mode · CaptchaLa demo</title>
+<meta name="description" content="CaptchaLa float mode demo — widget renders inline on the page; user interacts before submitting.">
+<link rel="icon" href="https://captcha.la/favicon.svg">
+<link rel="stylesheet" href="/_shared.css">
+</head>
+<body>
+
+<header>
+  <a class="brand" href="/"><b>Captcha</b>La · standalone demo</a>
+  <nav>
+    <a href="/">Home</a>
+    <a href="https://captcha.la/en/docs">Docs</a>
+    <a href="https://dash.captcha.la/register">Get app key</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Float mode</h1>
+  <p class="lead">
+    The widget renders inline on the page; the user completes verification before submitting your form.
+    <a href="/float.html.txt">View source</a>.
+  </p>
+
+  <nav class="tabs">
+    <a href="/popup.html">Popup</a>
+    <a href="/float.html" class="active">Float</a>
+    <a href="/bind.html">Bind to button</a>
+    <a href="/inline.html">Inline embed</a>
+    <a href="/server-token.html">Server token</a>
+  </nav>
+
+  <section class="demo">
+    <h2>Live demo</h2>
+    <p class="subtitle">Interact with the widget below to verify.</p>
+
+    <div class="stage" style="padding: 24px;">
+      <div id="float-container" style="width: 100%; max-width: 360px;"></div>
+      <div id="result" class="result"></div>
+    </div>
+
+    <div class="actions">
+      <a href="/float.html.txt">View HTML source</a>
+      <a href="/_sdk.js">SDK loader source</a>
+      <a href="/verify.php.txt">Backend verify.php</a>
+    </div>
+  </section>
+
+  <section class="demo">
+    <h2>Integration code</h2>
+    <pre><span class="k">&lt;script</span> src=<span class="s">"https://cdn.captcha-cdn.net/captchala.js"</span><span class="k">&gt;&lt;/script&gt;</span>
+
+<span class="k">&lt;form</span> id=<span class="s">"signup"</span><span class="k">&gt;</span>
+  <span class="k">&lt;input</span> name=<span class="s">"email"</span> type=<span class="s">"email"</span> required<span class="k">&gt;</span>
+  <span class="k">&lt;input</span> name=<span class="s">"password"</span> type=<span class="s">"password"</span> required<span class="k">&gt;</span>
+  <span class="k">&lt;div</span> id=<span class="s">"captcha"</span><span class="k">&gt;&lt;/div&gt;</span>     <span class="c">&lt;!-- widget mounts here --&gt;</span>
+  <span class="k">&lt;input</span> name=<span class="s">"captcha_token"</span> type=<span class="s">"hidden"</span><span class="k">&gt;</span>
+  <span class="k">&lt;button</span> type=<span class="s">"submit"</span><span class="k">&gt;</span>Sign up<span class="k">&lt;/button&gt;</span>
+<span class="k">&lt;/form&gt;</span>
+
+<span class="k">&lt;script&gt;</span>
+Captchala.init({
+  appKey: <span class="s">'YOUR_APP_KEY'</span>,
+  product: <span class="s">'float'</span>,
+  container: <span class="s">'#captcha'</span>,
+  action: <span class="s">'register'</span>,
+  lang: <span class="s">'en'</span>,
+  onSuccess: (res) =&gt; {
+    <span class="c">// Stash token in hidden field, let the user submit normally.</span>
+    document.querySelector(<span class="s">'[name=captcha_token]'</span>).value = res.token;
+  }
+});
+<span class="k">&lt;/script&gt;</span></pre>
+  </section>
+
+  <section class="demo">
+    <h2>When to use float</h2>
+    <p class="subtitle" style="margin-bottom: 0;">
+      Long forms where the user fills multiple fields before submitting. The widget verification can complete while they're still typing — when they hit submit, the token is already in hand. Lower perceived latency than popup for multi-step flows.
+    </p>
+  </section>
+</main>
+
+<footer>
+  <a href="https://captcha.la">CaptchaLa</a>
+  <a href="https://captcha.la/en/privacy">Privacy</a>
+  <a href="https://captcha.la/en/terms">Terms</a>
+  <a href="/LICENSE">MIT License</a>
+</footer>
+
+<script src="https://cdn.captcha-cdn.net/captchala-loader.js"></script>
+<script>
+function showResult(ok, msg) {
+  const el = document.getElementById('result');
+  el.className = 'result ' + (ok ? 'ok' : 'err');
+  el.textContent = msg;
+}
+loadCaptchala(function () {
+  Captchala.init({
+    appKey: 'demo_app',
+    product: 'float',
+    action: 'register',
+    lang: 'en',
+  })
+  .onSuccess(async function (res) {
+    try {
+      const r = await fetch('/verify.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: res.token, action: 'register' })
+      });
+      const j = await r.json();
+      if (j.ok) showResult(true, '✓ verified · risk_score=' + (j.risk_score ?? 'n/a') + ' · token: ' + (res.token || '').slice(0, 24) + '…');
+      else showResult(false, '✗ backend rejected: ' + (j.error || 'unknown'));
+    } catch (e) { showResult(false, '✗ network error: ' + e.message); }
+  })
+  .onError(function (err) { showResult(false, '✗ ' + (err && err.message || 'verification failed')); })
+  .appendTo('#float-container');
+}, function (err) { showResult(false, '✗ SDK load failed: ' + (err && err.message || err)); });
+</script>
+
+</body>
+</html>

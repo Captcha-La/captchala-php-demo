@@ -1,0 +1,102 @@
+/* CaptchaLa demo shared styles — MIT */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: #F9FAFB;
+  color: #111827;
+  line-height: 1.5;
+}
+header {
+  background: #fff; border-bottom: 1px solid #E5E7EB;
+  padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;
+}
+header .brand { font-weight: 700; font-size: 16px; color: #111827; text-decoration: none; }
+header .brand b { color: #3B82F6; }
+header nav a {
+  color: #4B5563; text-decoration: none; font-size: 14px; margin-left: 18px;
+}
+header nav a:hover { color: #3B82F6; }
+header nav a.active { color: #3B82F6; font-weight: 600; }
+
+main { max-width: 920px; margin: 0 auto; padding: 28px 24px 56px; }
+h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+.lead { color: #4B5563; margin: 0 0 24px; font-size: 15px; }
+.lead a { color: #3B82F6; text-decoration: none; }
+.lead a:hover { text-decoration: underline; }
+
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 20px; flex-wrap: wrap;
+  background: #F3F4F6; padding: 4px; border-radius: 10px;
+}
+.tabs a {
+  display: block; padding: 8px 16px; border-radius: 6px;
+  text-decoration: none; color: #4B5563; font-size: 14px; font-weight: 500;
+  transition: all 0.15s;
+}
+.tabs a:hover { color: #111827; background: rgba(255, 255, 255, 0.6); }
+.tabs a.active { background: #fff; color: #3B82F6; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+section.demo {
+  background: #fff; border: 1px solid #E5E7EB; border-radius: 12px;
+  padding: 24px; margin-bottom: 24px;
+}
+section.demo h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+section.demo .subtitle { color: #6B7280; margin: 0 0 16px; font-size: 14px; }
+
+.stage {
+  background: #F9FAFB; border: 1px dashed #D1D5DB; border-radius: 8px;
+  padding: 32px; min-height: 160px;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+}
+button.cta {
+  background: #3B82F6; color: #fff; border: 0;
+  padding: 10px 22px; border-radius: 8px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: background 0.15s;
+}
+button.cta:hover { background: #2563EB; }
+button.cta:disabled { background: #93C5FD; cursor: wait; }
+
+.result {
+  margin-top: 12px; padding: 10px 14px;
+  border-radius: 6px; font-size: 13px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  word-break: break-all; display: none;
+}
+.result.ok { background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; display: block; }
+.result.err { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; display: block; }
+
+pre {
+  background: #0F172A; color: #E2E8F0;
+  padding: 16px; border-radius: 8px;
+  overflow-x: auto; font-size: 13px; line-height: 1.6; margin: 12px 0 0;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+pre .k { color: #93C5FD; } pre .s { color: #FCA5A5; } pre .c { color: #64748B; font-style: italic; }
+
+.actions {
+  display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+}
+.actions a {
+  display: inline-block; padding: 6px 12px;
+  border: 1px solid #E5E7EB; border-radius: 6px;
+  font-size: 12px; color: #4B5563; text-decoration: none;
+  background: #fff; transition: all 0.15s;
+}
+.actions a:hover { border-color: #3B82F6; color: #3B82F6; }
+
+footer {
+  text-align: center; color: #9CA3AF; font-size: 13px;
+  padding: 28px 24px; border-top: 1px solid #E5E7EB; margin-top: 40px;
+}
+footer a { color: #6B7280; text-decoration: none; margin: 0 6px; }
+footer a:hover { color: #3B82F6; }
+
+@media (max-width: 640px) {
+  header { flex-direction: column; gap: 8px; align-items: flex-start; }
+  header nav a { margin-left: 0; margin-right: 14px; }
+  main { padding: 20px 16px 40px; }
+  .tabs { font-size: 13px; }
+  .tabs a { padding: 6px 10px; }
+}
